@@ -114,14 +114,14 @@ app.get('/profile/:id', (req, res) => {
   })
 })
 
-{
-  id: null,
-  email: null,
-  login: null,
-};
+// {
+//   id: null,
+//   email: null,
+//   login: null,
+// };
 
 // Simple implementation of authentification
-app.get('/auth/', (req, res) => {
+app.get('/auth/:id', (req, res) => {
   let sqlQuery = "SELECT * FROM users WHERE user_id = ?"
   let params = [req.params.id]
   console.log("params: ",params)

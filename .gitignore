@@ -2,8 +2,12 @@
 
 # dependencies
 /node_modules
-/.pnp
-.pnp.js
+
+# data base (sqlite3)
+/database
+
+# Some help files
+/help
 
 # testing
 /coverage
