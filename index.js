@@ -113,26 +113,65 @@ app.get('/profile/:id', (req, res) => {
     res.json(row)
   })
 })
-
-// {
-//   id: null,
-//   email: null,
-//   login: null,
-// };
-
+// Example of object auth
+let authMe = {
+  resultCode: 0,
+  messages: [],
+  data: {
+    id: 1,
+    email: 'heyhey@bla.com',
+    login: 'Anton'
+  }
+}
 // Simple implementation of authentification
-app.get('/auth/:id', (req, res) => {
-  let sqlQuery = "SELECT * FROM users WHERE user_id = ?"
+app.get('/auth/me', (req, res) => {
+  res.json(authMe)
+})
+
+// https://localhost:5000/follow/2
+app.post('/follow/:id', (req, res) => {
+  let sqlQueryRUN = "UPDATE users SET followed = 1 WHERE user_id = ?"  
   let params = [req.params.id]
-  console.log("params: ",params)
-  db.get(sqlQuery, params, (err, row) => {
+  console.log(params);
+  
+  db.run(sqlQueryRUN, params, function(err, result) {
     if (err) {
       res.status(400).json({"error":err.message});
       return;
     }
-    res.json(row)
+    console.log(sqlQueryRUN);
+    let message = {
+      resultCode: 0,
+      message: "success follow user",
+      id: params, //this.lastID,
+    }
+    res.json(message)
+    console.log(message);
   })
-})
+});
+// http://localhost:5000/unfollow/2
+app.delete('/unfollow/:id', (req, res) => {
+  let sqlQueryRUN = "UPDATE users SET followed = 0 WHERE user_id = ?"  
+  let params = [req.params.id]
+  console.log(params);
+  
+  db.run(sqlQueryRUN, params, function(err, result) {
+    if (err) {
+      res.status(400).json({"error":err.message});
+      return;
+    }
+    console.log(sqlQueryRUN);
+    let message = {
+      resultCode: 0,
+      message: "success unfollow user",
+      id: params,
+      changes: this.changes,
+    }
+    res.json(message)
+    console.log(message);
+    
+  })
+});
 
 //Simple parse of request
 //http://localhost:5000/social/parse?name=test&email=test%40example.com&password=test123
