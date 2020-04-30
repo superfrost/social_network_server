@@ -1,11 +1,14 @@
 const express = require('express')
 const cors = require('cors')
 const sqlite3 = require('sqlite3').verbose()
+const bodyParser = require('body-parser')
 
-// const bodyParser = require('body-parser')
 const app = express()
 app.use(cors())
 app.use(express.json())
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 let db = new sqlite3.Database('./database/social-net')
 
@@ -104,7 +107,7 @@ app.get('/social', (req, res) => {
 app.get('/profile/:id', (req, res) => {
   let sqlQuery = "SELECT * FROM users WHERE user_id = ?"
   let params = [req.params.id]
-  console.log("params: ",params)
+  console.log("Profile id: ",params)
   db.get(sqlQuery, params, (err, row) => {
     if (err) {
       res.status(400).json({"error":err.message});
@@ -158,6 +161,7 @@ app.delete('/unfollow/:id', (req, res) => {
   db.run(sqlQueryRUN, params, function(err, result) {
     if (err) {
       res.status(400).json({"error":err.message});
+      console.log(err.message)
       return;
     }
     console.log(sqlQueryRUN);
@@ -178,6 +182,56 @@ app.delete('/unfollow/:id', (req, res) => {
 app.get("/social/parse", (req, res) => {
   res.json(req.query)
 })
+
+//! getStatus
+app.get('/status/:id', (req, res) => {
+  console.log("GET")
+  let sqlQuery = "SELECT status FROM users WHERE user_id = ?"
+  let params = [req.params.id]
+  console.log("Profile id: ",params)
+  db.get(sqlQuery, params, (err, row) => {
+    if (err) {
+      res.status(400).json({"error":err.message});
+      console.log(err.message)
+      return;
+    }
+    console.log(sqlQuery);
+    let message = {
+      resultCode: 0,
+      status: row,
+      id: params,
+    }
+    res.json(message)
+    console.log(message);
+  })
+})
+
+//! putStatus (update)
+app.put('/status/', (req, res) => {
+  console.log("***PUT***", Date())
+  // console.log("BODY", req.body);
+  let sqlQueryRun = "UPDATE users SET status = ? WHERE user_id = 1"
+  let params = [req.body.status]
+  console.log("Profile id: ", params)
+  db.run(sqlQueryRun, params, function(err, result) {
+    if (err) {
+      res.status(400).json({
+        resultCode: 1,
+        "error":err.message});
+      console.log(err.message)
+      return;
+    }
+    let message = {
+      resultCode: 0,
+      message: "PUT success",
+      in_status: req.body.status,
+    }
+    res.json(message)
+    console.log(message);
+  })
+})
+
+//! Use datetime('now') to generate time stamp in messages
 
 app.listen(5000, () => {
     console.log("Listening on http://localhost:5000")
