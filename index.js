@@ -232,6 +232,20 @@ app.put('/status/', (req, res) => {
 })
 
 //! Use datetime('now') to generate time stamp in messages
+// Login form response
+app.post('/login', (req, res) => {
+  console.log("****POST****", Date());
+  console.log(req.query);
+
+  let loginMessage = {
+    resultCode: 0,
+    messages: [],
+    data: {
+      userId: 1
+    }
+  }
+  res.json(loginMessage)
+});
 
 app.listen(5000, () => {
     console.log("Listening on http://localhost:5000")
