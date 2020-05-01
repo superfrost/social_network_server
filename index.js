@@ -15,18 +15,18 @@ app.use(bodyParser.json());
 
 let db = new sqlite3.Database('./database/social-net')
 
-// Get token thruw login
-app.post('/api/login', (req, res) => {
-  if(!req.query || !req.query.username || !req.query.password) {
-    res.json({error: "No or wrong query parameter"})
+// Get token through login
+app.post("/api/login", (req, res) => {
+  if (!req.query || !req.query.username || !req.query.password) {
+    res.json({ error: "No or wrong query parameter" });
   } else {
-    let sqlQuery = "SELECT * FROM login WHERE login = ?"
-    let params = req.query.username.toString()
-    console.log("LOGIN: ",params)
+    let sqlQuery = "SELECT * FROM login WHERE login = ?";
+    let params = req.query.username.toString();
+    console.log("LOGIN: ", params);
     db.get(sqlQuery, params, (err, row) => {
       if (err) {
-        res.status(400).json({"error":err.message});
-        console.log(err.message)
+        res.status(400).json({ error: err.message });
+        console.log(err.message);
         return;
       } else if (req.query.password == row.password) {
         console.log(row);
@@ -36,14 +36,33 @@ app.post('/api/login', (req, res) => {
           username: row.login,
           rememberMe: req.query.rememberMe,
         };
-        jwt.sign({message}, SECRET_KEY, (err, token) => {
-          message.token = token
-          res.json(message)
+        jwt.sign({ message }, SECRET_KEY, (err, token) => {
+          message.token = token;
+          res.json(message);
           console.log(message);
-        })
+        });
       }
-    })
+    });
   }
+});
+
+app.delete('/logout', verifyToken, (req, res) => {
+  jwt.verify(req.token, SECRET_KEY, (err, authData) => {
+    if(err) {
+      res.status(500).json({
+        resultCode: 1,
+        error: "Login first",
+      })
+    } else {
+      let message = {
+        resultCode: 0,
+        username: authData.login,
+        message: "Success logout",
+      };
+      res.json(message)
+      console.log(message); 
+    }
+  })
 })
 //! { expiresIn: "600s" }
 app.post('/api/post', verifyToken, (req, res) => {
@@ -51,13 +70,14 @@ app.post('/api/post', verifyToken, (req, res) => {
     if(err) {
       res.status(500).json({
         resultCode: 1,
-        error: "login is required",
+        error: "Login first",
       })
     } else {
-      let message = { 
-        message: "OK post created", 
-        authData
-      }
+      let message = {
+        resultCode: 0,
+        username: authData.login,
+        message: "Success logout",
+      };
       res.json(message)
       console.log(message); 
     }
@@ -68,7 +88,6 @@ app.post('/api/post', verifyToken, (req, res) => {
 function verifyToken(req, res, next) {
   const bearerHeader = req.headers['authorization'];
   if(typeof bearerHeader !== 'undefined') {
-    //console.log("******", {authorization: bearerHeader});
     const bearer = bearerHeader.split(" ")
     const bearerToken = bearer[1]
     req.token = bearerToken
