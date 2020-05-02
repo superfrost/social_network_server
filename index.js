@@ -15,6 +15,8 @@ app.use(bodyParser.json());
 
 let db = new sqlite3.Database('./database/social-net')
 
+
+//! ************* Login with JWT ********************
 // Get token through login
 app.post("/api/login", (req, res) => {
   if (!req.query || !req.query.username || !req.query.password) {
@@ -23,6 +25,7 @@ app.post("/api/login", (req, res) => {
     let sqlQuery = "SELECT * FROM login WHERE login = ?";
     let params = req.query.username.toString();
     console.log("LOGIN: ", params);
+
     db.get(sqlQuery, params, (err, row) => {
       if (err) {
         res.status(400).json({ error: err.message });
@@ -34,8 +37,11 @@ app.post("/api/login", (req, res) => {
           resultCode: 0,
           user_id: row.user_id,
           username: row.login,
+          password: row.password,
+          email: row.email,
           rememberMe: req.query.rememberMe,
         };
+
         jwt.sign({ message }, SECRET_KEY, (err, token) => {
           message.token = token;
           res.json(message);
@@ -56,14 +62,52 @@ app.delete('/logout', verifyToken, (req, res) => {
     } else {
       let message = {
         resultCode: 0,
-        username: authData.login,
+        username: authData.message.username,
         message: "Success logout",
+        token: "",
       };
       res.json(message)
       console.log(message); 
     }
   })
 })
+
+// Example of object auth
+let authMe = {
+  resultCode: 0,
+  messages: [],
+  data: {
+    id: 1,
+    email: 'heyhey@bla.com',
+    login: 'Anton'
+  }
+}
+// Simple implementation of authentification
+app.get('/auth/me', verifyToken, (req, res) => {
+  jwt.verify(req.token, SECRET_KEY, (err, authData) => {
+    if(err) {
+      res.status(500).json({
+        resultCode: 1,
+        error: "I don't know you",
+      })
+    } else {
+      console.log(authData.message)
+      let message = {
+        resultCode: 0,
+        messages: "I know you!!!",
+        data: {
+          id: authData.message.user_id,
+          email: authData.message.email,
+          login: authData.message.username,
+          password: authData.message.password,
+        },
+      };
+      res.json(message)
+      console.log(message); 
+    }
+  })
+})
+
 //! { expiresIn: "600s" }
 app.post('/api/post', verifyToken, (req, res) => {
   jwt.verify(req.token, SECRET_KEY, (err, authData) => {
@@ -202,20 +246,7 @@ app.get('/profile/:id', (req, res) => {
     res.json(row)
   })
 })
-// Example of object auth
-let authMe = {
-  resultCode: 0,
-  messages: [],
-  data: {
-    id: 1,
-    email: 'heyhey@bla.com',
-    login: 'Anton'
-  }
-}
-// Simple implementation of authentification
-app.get('/auth/me', (req, res) => {
-  res.json(authMe)
-})
+
 
 // https://localhost:5000/follow/2
 app.post('/follow/:id', (req, res) => {
