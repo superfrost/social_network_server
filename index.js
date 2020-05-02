@@ -17,7 +17,7 @@ let db = new sqlite3.Database('./database/social-net')
 
 
 //! ************* Login with JWT ********************
-// Get token through login
+// Get token through login. You can use { expiresIn: "600s" }
 app.post("/api/login", (req, res) => {
   if (!req.query || !req.query.username || !req.query.password) {
     res.json({ error: "No or wrong query parameter" });
@@ -35,6 +35,9 @@ app.post("/api/login", (req, res) => {
         console.log(row);
         let message = {
           resultCode: 0,
+          data: {
+            userId: row.user_id
+          },
           user_id: row.user_id,
           username: row.login,
           password: row.password,
@@ -52,6 +55,7 @@ app.post("/api/login", (req, res) => {
   }
 });
 
+//! ********** LogOut **************
 app.delete('/logout', verifyToken, (req, res) => {
   jwt.verify(req.token, SECRET_KEY, (err, authData) => {
     if(err) {
@@ -72,7 +76,7 @@ app.delete('/logout', verifyToken, (req, res) => {
   })
 })
 
-// Example of object auth
+//? Example of object auth
 let authMe = {
   resultCode: 0,
   messages: [],
@@ -82,7 +86,9 @@ let authMe = {
     login: 'Anton'
   }
 }
+
 // Simple implementation of authentification
+//! ********* Autentificate Me ************
 app.get('/auth/me', verifyToken, (req, res) => {
   jwt.verify(req.token, SECRET_KEY, (err, authData) => {
     if(err) {
@@ -108,27 +114,7 @@ app.get('/auth/me', verifyToken, (req, res) => {
   })
 })
 
-//! { expiresIn: "600s" }
-app.post('/api/post', verifyToken, (req, res) => {
-  jwt.verify(req.token, SECRET_KEY, (err, authData) => {
-    if(err) {
-      res.status(500).json({
-        resultCode: 1,
-        error: "Login first",
-      })
-    } else {
-      let message = {
-        resultCode: 0,
-        username: authData.login,
-        message: "Success logout",
-      };
-      res.json(message)
-      console.log(message); 
-    }
-  })
-})
-
-//Verify token
+//Function to Verify token
 function verifyToken(req, res, next) {
   const bearerHeader = req.headers['authorization'];
   if(typeof bearerHeader !== 'undefined') {
@@ -263,7 +249,7 @@ app.post('/follow/:id', (req, res) => {
     let message = {
       resultCode: 0,
       message: "success follow user",
-      id: params, //this.lastID,
+      id: params,
     }
     res.json(message)
     console.log(message);
@@ -286,19 +272,12 @@ app.delete('/unfollow/:id', (req, res) => {
       resultCode: 0,
       message: "success unfollow user",
       id: params,
-      changes: this.changes,
     }
     res.json(message)
     console.log(message);
     
   })
 });
-
-//Simple parse of request
-//http://localhost:5000/social/parse?name=test&email=test%40example.com&password=test123
-app.get("/social/parse", (req, res) => {
-  res.json(req.query)
-})
 
 //! getStatus
 app.get('/status/:id', (req, res) => {
