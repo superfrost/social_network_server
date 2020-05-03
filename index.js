@@ -18,12 +18,12 @@ let db = new sqlite3.Database('./database/social-net')
 
 //! ************* Login with JWT ********************
 // Get token through login. You can use { expiresIn: "600s" }
-app.post("/api/login", (req, res) => {
-  if (!req.query || !req.query.username || !req.query.password) {
+app.post("/login", (req, res) => {
+  if (!req.query || !req.query.login || !req.query.password) {
     res.json({ error: "No or wrong query parameter" });
   } else {
     let sqlQuery = "SELECT * FROM login WHERE login = ?";
-    let params = req.query.username.toString();
+    let params = req.query.login.toString();
     console.log("LOGIN: ", params);
 
     db.get(sqlQuery, params, (err, row) => {
@@ -32,14 +32,14 @@ app.post("/api/login", (req, res) => {
         console.log(err.message);
         return;
       } else if (req.query.password == row.password) {
-        console.log(row);
+        console.log("SQL answer: ", row);
         let message = {
           resultCode: 0,
           data: {
             userId: row.user_id
           },
           user_id: row.user_id,
-          username: row.login,
+          login: row.login,
           password: row.password,
           email: row.email,
           rememberMe: req.query.rememberMe,
@@ -66,7 +66,7 @@ app.delete('/logout', verifyToken, (req, res) => {
     } else {
       let message = {
         resultCode: 0,
-        username: authData.message.username,
+        login: authData.message.login,
         message: "Success logout",
         token: "",
       };
@@ -329,19 +329,19 @@ app.put('/status/', (req, res) => {
 
 //! Use datetime('now') to generate time stamp in messages
 // Login form response
-app.post('/login', (req, res) => {
-  console.log("****POST****", Date());
-  console.log(req.query);
+// app.post('/login', (req, res) => {
+//   console.log("****POST****", Date());
+//   console.log(req.query);
 
-  let loginMessage = {
-    resultCode: 0,
-    messages: [],
-    data: {
-      userId: 1
-    }
-  }
-  res.json(loginMessage)
-});
+//   let loginMessage = {
+//     resultCode: 0,
+//     messages: [],
+//     data: {
+//       userId: 1
+//     }
+//   }
+//   res.json(loginMessage)
+// });
 
 app.listen(5000, () => {
     console.log("Listening on http://localhost:5000")
