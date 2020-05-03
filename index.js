@@ -14,24 +14,44 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 let db = new sqlite3.Database('./database/social-net')
+const starsInConsole= () => console.log("**************************************************");
 
 
 //! ************* Login with JWT ********************
 // Get token through login. You can use { expiresIn: "600s" }
 app.post("/login", (req, res) => {
+  starsInConsole();
+  console.log("Login Query: ", req.query)
   if (!req.query || !req.query.login || !req.query.password) {
-    res.json({ error: "No or wrong query parameter" });
+    res.json({ 
+      resultCode: 1,
+      error: "No or wrong query parameter" 
+    })
   } else {
     let sqlQuery = "SELECT * FROM login WHERE login = ?";
-    let params = req.query.login.toString();
-    console.log("LOGIN: ", params);
+    let login = req.query.login.toString();
+    let password = req.query.password.toString()
+    console.log("LOGIN: ", login, "Password: ", password);
 
-    db.get(sqlQuery, params, (err, row) => {
+    db.get(sqlQuery, login, (err, row) => {
+      console.log("SQL response: ", row);
       if (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ 
+          resultCode: 1,
+          error: err.message });
         console.log(err.message);
         return;
-      } else if (req.query.password == row.password) {
+      } 
+      else if (!row || (password !== row.password.toString())) {
+        let message = {
+          resultCode: 1,
+          data: {},
+          error: "Wrong Login or Password",
+        };
+        console.log(message);
+        res.json(message);
+      }
+      else if (password === row.password.toString()) {
         console.log("SQL answer: ", row);
         let message = {
           resultCode: 0,
@@ -92,9 +112,15 @@ let authMe = {
 app.get('/auth/me', verifyToken, (req, res) => {
   jwt.verify(req.token, SECRET_KEY, (err, authData) => {
     if(err) {
-      res.status(500).json({
+      res.status(200).json({
         resultCode: 1,
         error: "I don't know you",
+        data: {
+          id: null,
+          email: null,
+          login: null,
+          password: null,
+        },
       })
     } else {
       console.log(authData.message)
@@ -123,8 +149,9 @@ function verifyToken(req, res, next) {
     req.token = bearerToken
     next();
   } else {
-    res.sendStatus(403)
+    //res.sendStatus(403)
     console.log("-------No token---------");
+    //next();
   }
 }
 
