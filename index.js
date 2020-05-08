@@ -3,6 +3,7 @@ const cors = require('cors')
 const sqlite3 = require('sqlite3').verbose()
 const bodyParser = require('body-parser')
 const jwt = require('jsonwebtoken')
+var jwtexp = require('express-jwt');
 
 const SECRET_KEY = "SecretKey"
 
@@ -14,13 +15,59 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 let db = new sqlite3.Database('./database/social-net')
-const starsInConsole= () => console.log("**************************************************");
 
+app.use(
+  jwtexp({
+    secret: SECRET_KEY,
+    credentialsRequired: false,
+    getToken: function fromHeader(req) {
+      if (req.headers.authorization &&
+        req.headers.authorization.split(" ")[0] === "Bearer" &&
+        req.headers.authorization.split(" ")[1]
+      ) {
+        return req.headers.authorization.split(" ")[1];
+      } else {
+        console.log("invalid or no token!");
+        return "Error"
+      };
+    }
+  }).unless({path: ['/login']})
+)
+
+app.use(function (err, req, res, next) {
+  if(err) {
+    let {name, message, code, status} = err
+    res.status(401).send({
+      resultCode: 1,
+      error: name,
+      message,
+      code,
+      status,
+    })
+  }
+});
+
+app.get("/auth2/me", (req, res) => {
+  console.log(req.user)
+  if(req.user) {
+  let message = {
+    resultCode: 0,
+    message: "I know you!!!",
+    data: {
+      id: req.user.message.user_id,
+      email: req.user.message.email,
+      login: req.user.message.login,
+      password: req.user.message.password,
+    },
+  };
+  res.json(message)
+  console.log(message); 
+  }
+})
 
 //! ************* Login with JWT ********************
 // Get token through login. You can use { expiresIn: "600s" }
 app.post("/login", (req, res) => {
-  starsInConsole();
   console.log("Login Query: ", req.query)
   if (!req.query || !req.query.login || !req.query.password) {
     res.status(400).json({ 
@@ -130,7 +177,7 @@ app.get('/auth/me', verifyToken, (req, res) => {
         data: {
           id: authData.message.user_id,
           email: authData.message.email,
-          login: authData.message.username,
+          login: authData.message.login,
           password: authData.message.password,
         },
       };
@@ -149,7 +196,7 @@ function verifyToken(req, res, next) {
     req.token = bearerToken
     next();
   } else {
-    //res.sendStatus(403)
+                     //res.sendStatus(403)
     console.log("-------No token---------");
     //next();
   }
@@ -352,6 +399,39 @@ app.put('/status/', (req, res) => {
     res.json(message)
     console.log(message);
   })
+})
+
+let posts = [
+  {id: 1, person_id: 1, date: '15-03-2020 17:13', message: "Hi it's me !!!", like_count: 17},
+  {id: 2, person_id: 2, date: '14-03-2020 16:07', message: "Where are you?", like_count: 4},
+  {id: 3, person_id: 3, date: '13-03-2020 09:57', message: "Are you kidding me?", like_count: 55},
+  {id: 4, person_id: 4, date: '12-03-2020 13:49', message: "There were white out conditions in the town; subsequently, the roads were impassable.", like_count: 32},
+  {id: 5, person_id: 5, date: '11-03-2020 11:45', message: "There's a reason that roses have thorns.", like_count: 43},
+  {id: 6, person_id: 6, date: '10-03-2020 20:45', message: "Whenever he saw a red flag warning at the beach he grabbed his surfboard.", like_count: 9},
+  {id: 7, person_id: 7, date: '09-03-2020 13:36', message: "Choosing to do nothing is still a choice, after all.", like_count: 13},
+  {id: 8, person_id: 8, date: '08-03-2020 12:20', message: "She saw no irony asking me to change but wanting me to accept her for who she is.", like_count: 11},
+  {id: 9, person_id: 2, date: '07-03-2020 15:41', message: "Toddlers feeding raccoons surprised even the seasoned park ranger.", like_count: 79},
+  {id: 10, person_id: 4, date: '06-03-2020 18:43', message: "She finally understood that grief was her love with no place for it to go.", like_count: 23},
+  {id: 11, person_id: 3, date: '05-03-2020 13:20', message: "The pigs were insulted that they were named hamburgers.", like_count: 45},
+  {id: 12, person_id: 6, date: '04-03-2020 16:17', message: "He used to get confused between soldiers and shoulders, but as a military man, he now soldiers responsibility.", like_count: 22},
+  {id: 13, person_id: 7, date: '03-03-2020 15:00', message: "Yeah, I think it's a good environment for learning English.", like_count: 56},
+  {id: 14, person_id: 1, date: '02-03-2020 11:10', message: "Nobody questions who built the pyramids in Mexico.", like_count: 73},
+  {id: 15, person_id: 8, date: '01-03-2020 13:40', message: "When he encountered maize for the first time, he thought it incredibly corny.", like_count: 5},
+  {id: 16, person_id: 6, date: '20-02-2020 13:40', message: "Hey Lera", like_count: 34},
+]
+
+//! Get User Posts
+app.get("/posts/:id", (req, res) => {
+  console.log("***GET Posts***", Date.now())
+  let user_id = req.params.id
+  if (!user_id)  {
+    res.status(401).json({resultCode: 1, error: "No or wrong user ID"})}
+  else { 
+    let userPosts = posts.filter(p => p.person_id == user_id)
+  res.json(userPosts)
+  console.log(userPosts);
+  }
+
 })
 
 //! Use datetime('now') to generate time stamp in messages
