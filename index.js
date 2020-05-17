@@ -411,6 +411,7 @@ app.get("/posts/:id", (req, res) => {
       console.log(message);
     })
 })
+
 //! Add new Post
 app.post("/posts", (req, res) => {
   if (req.user.message.user_id.toString() === req.body.user_id.toString()) {
@@ -451,17 +452,7 @@ app.post("/posts", (req, res) => {
   }
 });
 
-let friends = [
-  {id: 1, name: 'Anton', photoSrc: 'https://www.famousbirthdays.com/faces/clooney-george-image.jpg'},
-  {id: 2, name: 'Lera', photoSrc: 'https://www.famousbirthdays.com/headshots/zoe-saldana-5.jpg'},
-  {id: 3, name: 'Nick', photoSrc: 'https://www.famousbirthdays.com/faces/dicaprio-l-image.jpg'},
-  {id: 4, name: 'Ben', photoSrc: 'https://www.famousbirthdays.com/headshots/ben-stiller-4.jpg'},
-  {id: 5, name: 'Kate', photoSrc: 'https://www.famousbirthdays.com/faces/banks-tyra-image.jpg'},
-  {id: 6, name: 'John', photoSrc: 'https://www.famousbirthdays.com/headshots/dwayne-johnson-9.jpg'},
-  {id: 7, name: 'B.Kingsley', photoSrc: 'https://www.famousbirthdays.com/thumbnails/kingsley-ben-large.jpg'},
-  {id: 8, name: 'Will Smit', photoSrc: 'https://www.famousbirthdays.com/headshots/will-smith-1.jpg'}
-]
-
+//! get friends
 app.post("/friends", (req, res) => {
   console.log("**********FRIENDS*************")
   let params = req.body.friends
